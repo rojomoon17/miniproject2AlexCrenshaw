@@ -43,13 +43,33 @@ def fetch_closing_prices(tickers, trading_days):
     return closes
 
 
+def plot_ticker(ticker, prices):
+    """Plot one ticker's closing prices and save it as a PNG in charts/."""
+    fig, ax = plt.subplots()
+    days = np.arange(1, len(prices) + 1)
+
+    ax.plot(days, prices, marker="o")
+    ax.set_title(f"{ticker} - Last {len(prices)} Trading Days")
+    ax.set_xlabel("Trading Day")
+    ax.set_ylabel("Closing Price (USD)")
+    ax.set_xticks(days)
+    ax.grid(True)
+
+    fig.savefig(os.path.join(CHARTS_DIR, f"{ticker}.png"))
+    plt.close(fig)
+
+
 def main():
     closes_list = fetch_closing_prices(TICKERS, TRADING_DAYS)
     closes = np.array(closes_list)
 
     print(f"Data source: {DATA_SOURCE}")
     print(f"Closing prices array shape: {closes.shape}")
-    print(closes)
+
+    os.makedirs(CHARTS_DIR, exist_ok=True)
+    for ticker, prices in zip(TICKERS, closes):
+        plot_ticker(ticker, prices)
+        print(f"Saved chart for {ticker}")
 
 
 if __name__ == "__main__":
