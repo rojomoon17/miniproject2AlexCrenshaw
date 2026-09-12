@@ -16,7 +16,7 @@ import yfinance as yf
 from matplotlib.colors import LinearSegmentedColormap
 
 # Dark grey (top) fading to black (bottom), used as the chart background.
-BACKGROUND_CMAP = LinearSegmentedColormap.from_list("bg_gradient", ["#3a3a3a", "#000000"])
+BACKGROUND_CMAP = LinearSegmentedColormap.from_list("bg_gradient", ["#262626", "#000000"])
 
 # Data source used for this project. yfinance was reachable and working,
 # so the Practice Hub fallback endpoint was not needed.
@@ -71,7 +71,6 @@ def plot_ticker(ticker, company_name, dates, prices):
     green/red for up/down days, and save it as a PNG in charts/."""
     up_color = "tab:green"
     down_color = "tab:red"
-    first_point_color = "tab:gray"
     text_color = "whitesmoke"
 
     x = np.arange(len(prices))
@@ -100,19 +99,22 @@ def plot_ticker(ticker, company_name, dates, prices):
         zorder=0,
     )
 
-    # Shade the area under each segment, and color each segment/point,
-    # by whether the price rose or fell versus the previous trading day.
-    for i in range(1, len(prices)):
-        segment_color = up_color if prices[i] >= prices[i - 1] else down_color
+    # One color per segment, based on whether the price rose or fell
+    # versus the previous trading day.
+    segment_colors = [up_color if prices[i] >= prices[i - 1] else down_color for i in range(1, len(prices))]
+
+    # Shade the area under each segment and color the line to match.
+    for i, segment_color in enumerate(segment_colors, start=1):
         ax.fill_between(
             x[i - 1 : i + 1], prices[i - 1 : i + 1], y_bottom, color=segment_color, alpha=0.25, zorder=1
         )
         ax.plot(x[i - 1 : i + 1], prices[i - 1 : i + 1], color=segment_color, linewidth=2, zorder=2)
 
-    point_colors = [first_point_color] + [
-        up_color if prices[i] >= prices[i - 1] else down_color for i in range(1, len(prices))
-    ]
-    ax.scatter(x, prices, color=point_colors, edgecolor="white", linewidth=0.5, zorder=3)
+    # Color each point to match the segment leaving it, so every point
+    # reads as part of an up or down move. The last point has no segment
+    # leaving it, so it's colored like the segment arriving at it instead.
+    point_colors = segment_colors + [segment_colors[-1]]
+    ax.scatter(x, prices, color=point_colors, zorder=3)
 
     ax.set_title(f"{company_name} ({ticker}) - Last {len(prices)} Trading Days", color=text_color)
     ax.set_xlabel("Date", color=text_color)
