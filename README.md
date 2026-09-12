@@ -1,3 +1,3 @@
- # INF601 - Advanced Programming in Python
-  # Your Name
-  # Mini Project 2
+# INF601 - Advanced Programming in Python
+# Alex Crenshaw
+# Mini Project 2
