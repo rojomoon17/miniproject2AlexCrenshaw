@@ -7,6 +7,11 @@ Fetches the closing price of 5 stock tickers for the last 10 trading days
 using yfinance, stores the results in a NumPy array, plots one chart per
 ticker, and saves each chart as a PNG in charts/.
 """
+# Claude decided to use triple-quoted string literals instead of comments for the header
+# after learning why I've decided to keep this format
+# doing this for the first statement in a module, class, function, or method makes it the object's docstring
+# docstrings can be retrieved later at runtime while comments can't so it's good for documentation
+# I think it should count for the assignment's requirements
 
 import os
 
