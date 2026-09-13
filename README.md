@@ -51,7 +51,7 @@ doesn't already exist).
 ## Troubleshooting
 
 If `yfinance`/`requests` fail with a `CERTIFICATE_VERIFY_FAILED` error,
-it's usually an antivirus doing HTTPS scanning (Avast, for example)
+it could be an antivirus doing HTTPS scanning (Avast caused this issue when I was working on the project)
 with a root certificate that isn't in Python's bundled `certifi` trust
 store. Add an exception for `python.exe` in your antivirus's HTTPS/SSL
 scanning settings, or disable that feature, and try again.
@@ -61,20 +61,22 @@ scanning settings, or disable that feature, and try again.
 This project was built with Claude Code. Roughly how it was used:
 
 - Data fetching, the NumPy array conversion, and the initial plotting
-  code were drafted by Claude Code from the assignment requirements,
+  code were drafted by Claude Code based on the assignment requirements,
   then run and checked before moving on.
 - The chart styling (company name in the title, calendar date
   formatting, green/red color-coding, the dark gradient background, and
   the shaded/gapped area under the line) was built through an iterative
-  loop: Claude Code would draft an approach, run the script, and send me
-  the resulting PNG; I'd point out what looked wrong or what I wanted
+  loop: I had Claude draft something, run it, then send me
+  the result; I'd point out what looked wrong or what I wanted
   changed, and it would adjust and re-run. Several attempts at the
   gap-between-line-and-shading effect were tried and rejected (a
   uniform shadow, a straight vertical offset, a shifted fill region)
   before landing on a clipped, feathered stroke that stayed visually
   even regardless of a segment's slope.
 - `requirements.txt` was regenerated with `pip freeze` and this README
-  was drafted by Claude Code, then reviewed by me.
+  was drafted by Claude Code, then reviewed and edited by me for tone.
 - All commits were reviewed before pushing; every design decision
   (colors, date format, chart effects, which tickers to use) was mine -
   Claude Code implemented and iterated on them.
+- I also asked Claude what stocks would be interesting to look at and used the 5 it suggested.
+- The instructor provided PowerShell commands for downloading the requirements and using pip freeze to record them into the requirements.txt file. Claude suggested using UTF-8, instead of the UTF-16 format that PowerShell defaulted to, for more standardized documentation so it ran a new pip freeze using bash.
