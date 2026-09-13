@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yfinance as yf
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Polygon
 from matplotlib.ticker import StrMethodFormatter
 
 CHART_DPI = 150
@@ -106,15 +107,44 @@ def plot_ticker(ticker, company_name, dates, prices):
     # versus the previous trading day.
     segment_colors = [up_color if prices[i] >= prices[i - 1] else down_color for i in range(1, len(prices))]
 
-    # Shade the area under each segment, glow beneath the line, then draw
-    # the crisp line on top - all color-matched per segment.
-    glow_layers = ((6, 0.08), (4, 0.12))
+    # Shade the area under each segment, flush against the line itself,
+    # then paint a background-colored stroke along that same path before
+    # drawing the real line on top. A stroke's width in matplotlib is
+    # always measured perpendicular to its path, so this "erases" a band
+    # of constant on-screen width around the line regardless of slope -
+    # unlike shifting the fill's geometry, which visibly thins out on
+    # steep segments.
+    LINE_WIDTH = 2
+    GAP_WIDTH = 3
+    # Layered, increasingly narrow/opaque strokes fade from transparent
+    # at the outer edge to solid near the line, instead of one stroke
+    # with a single hard edge where it meets the colored fill.
+    FEATHER_LAYERS = [(1.0, 0.2), (0.7, 0.35), (0.45, 0.6), (0.2, 1.0)]
     for i, segment_color in enumerate(segment_colors, start=1):
         xi, yi = x[i - 1 : i + 1], prices[i - 1 : i + 1]
         ax.fill_between(xi, yi, y_bottom, color=segment_color, alpha=0.25, zorder=1)
-        for glow_width, glow_alpha in glow_layers:
-            ax.plot(xi, yi, color=segment_color, linewidth=glow_width, alpha=glow_alpha, zorder=1.5)
-        ax.plot(xi, yi, color=segment_color, linewidth=2, zorder=2)
+
+        # The spacer stroke below is centered on the line, so half its
+        # width would otherwise bleed above the line into the plain
+        # background. Clip it to the filled region (the same shape as
+        # the fill_between above) so it only erases inside the shading.
+        clip_region = Polygon(
+            [(xi[0], yi[0]), (xi[1], yi[1]), (xi[1], y_bottom), (xi[0], y_bottom)],
+            transform=ax.transData,
+        )
+        for width_frac, alpha in FEATHER_LAYERS:
+            (spacer,) = ax.plot(
+                xi,
+                yi,
+                color="black",
+                alpha=alpha,
+                linewidth=LINE_WIDTH + 2 * GAP_WIDTH * width_frac,
+                solid_capstyle="round",
+                zorder=1.5,
+            )
+            spacer.set_clip_path(clip_region)
+
+        ax.plot(xi, yi, color=segment_color, linewidth=LINE_WIDTH, solid_capstyle="round", zorder=2)
 
     # Color each point to match the segment leaving it, so every point
     # reads as part of an up or down move. The last point has no segment
