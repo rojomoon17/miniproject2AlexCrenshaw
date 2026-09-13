@@ -14,6 +14,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yfinance as yf
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.ticker import StrMethodFormatter
+
+CHART_DPI = 150
 
 # Dark grey (top) fading to black (bottom), used as the chart background.
 BACKGROUND_CMAP = LinearSegmentedColormap.from_list("bg_gradient", ["#262626", "#000000"])
@@ -103,12 +106,15 @@ def plot_ticker(ticker, company_name, dates, prices):
     # versus the previous trading day.
     segment_colors = [up_color if prices[i] >= prices[i - 1] else down_color for i in range(1, len(prices))]
 
-    # Shade the area under each segment and color the line to match.
+    # Shade the area under each segment, glow beneath the line, then draw
+    # the crisp line on top - all color-matched per segment.
+    glow_layers = ((6, 0.08), (4, 0.12))
     for i, segment_color in enumerate(segment_colors, start=1):
-        ax.fill_between(
-            x[i - 1 : i + 1], prices[i - 1 : i + 1], y_bottom, color=segment_color, alpha=0.25, zorder=1
-        )
-        ax.plot(x[i - 1 : i + 1], prices[i - 1 : i + 1], color=segment_color, linewidth=2, zorder=2)
+        xi, yi = x[i - 1 : i + 1], prices[i - 1 : i + 1]
+        ax.fill_between(xi, yi, y_bottom, color=segment_color, alpha=0.25, zorder=1)
+        for glow_width, glow_alpha in glow_layers:
+            ax.plot(xi, yi, color=segment_color, linewidth=glow_width, alpha=glow_alpha, zorder=1.5)
+        ax.plot(xi, yi, color=segment_color, linewidth=2, zorder=2)
 
     # Color each point to match the segment leaving it, so every point
     # reads as part of an up or down move. The last point has no segment
@@ -121,13 +127,14 @@ def plot_ticker(ticker, company_name, dates, prices):
     ax.set_ylabel("Closing Price (USD)", color=text_color)
     ax.set_xticks(x)
     ax.set_xticklabels([format_date(d) for d in dates], rotation=45, ha="right")
+    ax.yaxis.set_major_formatter(StrMethodFormatter("${x:,.2f}"))
     ax.tick_params(colors=text_color)
     for spine in ax.spines.values():
         spine.set_color(text_color)
-    ax.grid(True, color=text_color, alpha=0.2)
+    ax.grid(axis="y", color=text_color, alpha=0.2)
     fig.tight_layout()
 
-    fig.savefig(os.path.join(CHARTS_DIR, f"{ticker}.png"), facecolor=fig.get_facecolor())
+    fig.savefig(os.path.join(CHARTS_DIR, f"{ticker}.png"), dpi=CHART_DPI, facecolor=fig.get_facecolor())
     plt.close(fig)
 
 
